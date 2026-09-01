@@ -1,0 +1,64 @@
+# Run outputs — contain extracted figures and panels from user manuscripts.
+# These must never be committed. See PRIVACY.md §6.
+runs/
+*.run/
+
+# Local corpora — contain a lab's papers and derived panel images.
+corpus/
+corpora/
+*.corpus/
+
+# Evaluation material. Manifests and fetch scripts are committed; the fetched
+# bytes are not. See DATASET_POLICY.md §4 and §8.
+eval/corpora/**/pdfs/
+eval/corpora/**/figures/
+eval/synthetic/out/
+*.pdf
+!tests/fixtures/**/*.pdf
+
+# Disposable spike/benchmark output. Source, manifests, and generated-at-runtime
+# fixture builders remain committed; their outputs do not.
+spikes/**/output/
+spikes/**/outputs/
+spikes/**/results/
+spikes/**/benchmark-output/
+spikes/**/report-output/
+spikes/**/overlays/
+spikes/**/thumbnails/
+spikes/**/trial-data/
+spikes/**/results.json
+spikes/**/report.html
+spikes/**/*trial_record*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.spike-venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+._*
+.AppleDouble
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+.fleet/
+*.swp
+*.swo
+*~

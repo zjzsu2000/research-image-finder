@@ -1,0 +1,79 @@
+{
+  "schema_version": "0.1.0",
+  "id": "f_9c2ab41e7d3f0a11",
+  "run_id": "run_20260830T174501Z_3f9a",
+  "finding_type": "image.duplicate_region_pair",
+  "review_priority": "high",
+  "review_priority_note": "Ordering hint for human review. NOT a probability, likelihood, or indication of misconduct.",
+  "detector": { "name": "image.within_document", "version": "0.1.0", "params_hash": "a41c9f22" },
+  "locations": [
+    {
+      "role": "a", "doc_id": "subject", "doc_role": "subject", "page": 7,
+      "figure_label": "Figure 3B", "panel_id": "p_f3_b",
+      "bbox": [112, 340, 398, 562], "region_bbox": [140, 360, 300, 470],
+      "char_span": null, "table_id": null, "cell": null, "quoted_text": null
+    },
+    {
+      "role": "b", "doc_id": "subject", "doc_role": "subject", "page": 11,
+      "figure_label": "Figure 5D", "panel_id": "p_f5_d",
+      "bbox": [90, 120, 376, 342], "region_bbox": [118, 140, 278, 250],
+      "char_span": null, "table_id": null, "cell": null, "quoted_text": null
+    }
+  ],
+  "evidence": {
+    "kind": "image_region_match",
+    "method": "ORB+RANSAC",
+    "inlier_count": 142,
+    "inlier_ratio": 0.86,
+    "overlap_area_frac_a": 0.41,
+    "overlap_area_frac_b": 0.39,
+    "phash_hamming": 18,
+    "ncc_peak": null,
+    "estimated_transform": {
+      "type": "similarity", "flip_x": true, "flip_y": false,
+      "rotation_deg": 0.4, "scale": 0.97
+    },
+    "homography": [[0.97, 0.01, 12.4], [-0.01, 0.97, -3.2], [0.0, 0.0, 1.0]],
+    "panel_content_type": { "a": "micrograph", "b": "micrograph" },
+    "inset_relationship": false,
+    "recurring_control_candidate": false,
+    "recurring_control_match_count": 0,
+    "same_work_candidate": null
+  },
+  "evidence_assets": [
+    { "role": "crop_a", "path": "evidence/f_9c2ab41e7d3f0a11/crop_a.png", "sha256": "3a1f5c0e", "media_type": "image/png" },
+    { "role": "crop_b", "path": "evidence/f_9c2ab41e7d3f0a11/crop_b.png", "sha256": "9b02d7aa", "media_type": "image/png" },
+    { "role": "overlay", "path": "evidence/f_9c2ab41e7d3f0a11/overlay.png", "sha256": "c74d1180", "media_type": "image/png" }
+  ],
+  "why_flagged": "A region of Figure 3B aligns to a region of Figure 5D under a horizontal flip with 142 geometrically consistent feature matches (86% inlier ratio), covering about 40% of each panel. The two panels are captioned as different experimental conditions.",
+  "possible_benign_explanations": [
+    "The same control condition is legitimately shown in both figures",
+    "Both panels derive from the same source image, with reuse intended but not stated in the legend",
+    "A panel was placed in the wrong slot during figure assembly"
+  ],
+  "recommended_verification": [
+    "Locate the original acquisition files for both panels and compare capture timestamps and filenames",
+    "Ask the person who assembled the figure which experiment each panel came from",
+    "If the reuse is intended, state it explicitly in the figure legend before submission"
+  ],
+  "narrative_source": { "mode": "template", "model": null },
+  "triage": { "status": "open", "reason": null, "reviewer_note": null, "updated_at": null },
+  "reproduction": {
+    "detector": "image.within_document",
+    "version": "0.1.0",
+    "params": { "min_inliers": 30, "ratio_test": 0.75, "ransac_reproj_px": 3.0, "seed": 0 },
+    "input_digests": { "panel_a": "sha256:1f0c8e21", "panel_b": "sha256:77ad4b90" }
+  },
+  "provenance": {
+    "timestamp_utc": "2026-08-30T17:45:03Z",
+    "tool_version": "0.1.0",
+    "schema_version": "0.1.0",
+    "mode": "strict_local",
+    "external_services_used": [],
+    "models_used": [],
+    "index_version": null,
+    "source_documents": [
+      { "doc_id": "subject", "sha256": "sha256:be31c7d4", "basename": "manuscript.pdf" }
+    ]
+  }
+}

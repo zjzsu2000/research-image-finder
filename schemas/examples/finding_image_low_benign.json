@@ -1,0 +1,79 @@
+{
+  "schema_version": "0.1.0",
+  "id": "f_2e77a10bb4c9d038",
+  "run_id": "run_20260830T174501Z_3f9a",
+  "finding_type": "image.duplicate_region_pair",
+  "review_priority": "low",
+  "review_priority_note": "Ordering hint for human review. NOT a probability, likelihood, or indication of misconduct.",
+  "detector": { "name": "image.within_document", "version": "0.1.0", "params_hash": "a41c9f22" },
+  "locations": [
+    {
+      "role": "a", "doc_id": "subject", "doc_role": "subject", "page": 5,
+      "figure_label": "Figure 2A", "panel_id": "p_f2_a_actin",
+      "bbox": [96, 512, 402, 566], "region_bbox": [96, 512, 402, 566],
+      "char_span": null, "table_id": null, "cell": null, "quoted_text": null
+    },
+    {
+      "role": "b", "doc_id": "subject", "doc_role": "subject", "page": 8,
+      "figure_label": "Figure 3A", "panel_id": "p_f3_a_actin",
+      "bbox": [96, 480, 402, 534], "region_bbox": [96, 480, 402, 534],
+      "char_span": null, "table_id": null, "cell": null, "quoted_text": null
+    }
+  ],
+  "evidence": {
+    "kind": "image_region_match",
+    "method": "NCC",
+    "inlier_count": 0,
+    "inlier_ratio": 0.0,
+    "overlap_area_frac_a": 0.98,
+    "overlap_area_frac_b": 0.98,
+    "phash_hamming": 2,
+    "ncc_peak": 0.991,
+    "estimated_transform": {
+      "type": "identity", "flip_x": false, "flip_y": false,
+      "rotation_deg": 0.0, "scale": 1.0
+    },
+    "homography": null,
+    "panel_content_type": { "a": "blot", "b": "blot" },
+    "inset_relationship": false,
+    "recurring_control_candidate": true,
+    "recurring_control_match_count": 4,
+    "same_work_candidate": null
+  },
+  "evidence_assets": [
+    { "role": "crop_a", "path": "evidence/f_2e77a10bb4c9d038/crop_a.png", "sha256": "5510ee72", "media_type": "image/png" },
+    { "role": "crop_b", "path": "evidence/f_2e77a10bb4c9d038/crop_b.png", "sha256": "b0c94a1d", "media_type": "image/png" },
+    { "role": "overlay", "path": "evidence/f_2e77a10bb4c9d038/overlay.png", "sha256": "e21f7730", "media_type": "image/png" }
+  ],
+  "why_flagged": "The loading-control strip in Figure 2A matches the corresponding strip in Figure 3A almost exactly (normalized cross-correlation 0.99, no geometric transform). This panel also matches four other panels in the manuscript, which is the pattern expected of a shared control rather than of an isolated duplication.",
+  "possible_benign_explanations": [
+    "This panel matches four other panels in the manuscript, which is the expected pattern for a shared loading control or a reference condition displayed alongside multiple treatments",
+    "The same gel was imaged once and its control lane is reproduced beneath each related blot",
+    "The figures present different treatments from a single experiment that shares one control"
+  ],
+  "recommended_verification": [
+    "Confirm that the reuse of this control across figures is intended",
+    "If one control image is shared across panels, state that explicitly in the figure legends",
+    "Check that each blot's control corresponds to the gel on which that blot was run"
+  ],
+  "narrative_source": { "mode": "template", "model": null },
+  "triage": { "status": "open", "reason": null, "reviewer_note": null, "updated_at": null },
+  "reproduction": {
+    "detector": "image.within_document",
+    "version": "0.1.0",
+    "params": { "min_inliers": 30, "ratio_test": 0.75, "ncc_threshold": 0.95, "low_texture_keypoint_floor": 30, "seed": 0 },
+    "input_digests": { "panel_a": "sha256:aa10bd44", "panel_b": "sha256:cd77e902" }
+  },
+  "provenance": {
+    "timestamp_utc": "2026-08-30T17:45:05Z",
+    "tool_version": "0.1.0",
+    "schema_version": "0.1.0",
+    "mode": "strict_local",
+    "external_services_used": [],
+    "models_used": [],
+    "index_version": null,
+    "source_documents": [
+      { "doc_id": "subject", "sha256": "sha256:be31c7d4", "basename": "manuscript.pdf" }
+    ]
+  }
+}

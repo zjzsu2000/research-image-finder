@@ -1,0 +1,69 @@
+{
+  "schema_version": "0.1.0",
+  "id": "f_4d81b0c39a27ee50",
+  "run_id": "run_20260830T174501Z_3f9a",
+  "finding_type": "numeric.sample_size_disagreement",
+  "review_priority": "medium",
+  "review_priority_note": "Ordering hint for human review. NOT a probability, likelihood, or indication of misconduct.",
+  "detector": { "name": "numeric.consistency", "version": "0.1.0", "params_hash": "77b2e01c" },
+  "locations": [
+    {
+      "role": "a", "doc_id": "subject", "doc_role": "subject", "page": 4,
+      "figure_label": null, "panel_id": null,
+      "bbox": null, "region_bbox": null, "char_span": [18422, 18461],
+      "table_id": null, "cell": null,
+      "quoted_text": "Mice in the high-dose group (n = 24) were treated for 14 days."
+    },
+    {
+      "role": "b", "doc_id": "subject", "doc_role": "subject", "page": 9,
+      "figure_label": "Figure 4C", "panel_id": null,
+      "bbox": null, "region_bbox": null, "char_span": [40117, 40158],
+      "table_id": null, "cell": null,
+      "quoted_text": "high-dose group, n = 22; error bars indicate s.e.m."
+    }
+  ],
+  "evidence": {
+    "kind": "numeric_disagreement",
+    "quantity": "sample_size",
+    "referent": "high-dose group",
+    "observations": [
+      { "value": 24, "unit": "animals", "location_index": 0, "quoted_text": "high-dose group (n = 24)" },
+      { "value": 22, "unit": "animals", "location_index": 1, "quoted_text": "high-dose group, n = 22" }
+    ],
+    "relation": "equality_expected",
+    "computed": null,
+    "referent_resolution": "exact_label_match",
+    "ambiguity_notes": "Both mentions use the identical group label 'high-dose group'. No intervening text describes attrition, exclusion, or a per-analysis subset."
+  },
+  "why_flagged": "The sample size reported for the group labelled 'high-dose group' is 24 in the methods section and 22 in the legend of Figure 4C. Both mentions use the identical group label and no exclusion is described between them.",
+  "possible_benign_explanations": [
+    "Two animals were excluded after enrolment and the exclusion is described elsewhere in the manuscript or in supplementary material",
+    "The figure shows a subset of the cohort for which a specific measurement was available",
+    "One of the two mentions was not updated after the analysis was rerun"
+  ],
+  "recommended_verification": [
+    "Confirm the intended n for this group against the analysis output",
+    "If animals were excluded, state the number and the reason in the methods or the legend",
+    "Check whether other mentions of this group elsewhere in the manuscript use a third value"
+  ],
+  "narrative_source": { "mode": "template", "model": null },
+  "triage": { "status": "open", "reason": null, "reviewer_note": null, "updated_at": null },
+  "reproduction": {
+    "detector": "numeric.consistency",
+    "version": "0.1.0",
+    "params": { "referent_resolution": ["exact_label_match"], "min_label_tokens": 2, "seed": 0 },
+    "input_digests": { "text_layer": "sha256:0ac91f37" }
+  },
+  "provenance": {
+    "timestamp_utc": "2026-08-30T17:45:04Z",
+    "tool_version": "0.1.0",
+    "schema_version": "0.1.0",
+    "mode": "strict_local",
+    "external_services_used": [],
+    "models_used": [],
+    "index_version": null,
+    "source_documents": [
+      { "doc_id": "subject", "sha256": "sha256:be31c7d4", "basename": "manuscript.pdf" }
+    ]
+  }
+}

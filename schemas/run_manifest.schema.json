@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://research-preflight.org/schemas/run_manifest.schema.json",
+  "title": "Research Preflight Run Manifest",
+  "description": "Self-describing record of one preflight run: mode, versions, seeds, inputs, policy decisions, coverage, and timings. Contains no aggregate integrity score; counts by review_priority are for rendering only and do not rate a document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "run_id", "tool_version", "mode", "started_utc", "finished_utc",
+    "policy", "inputs", "component_versions", "seeds", "coverage", "counts", "notice"
+  ],
+  "propertyNames": { "$ref": "#/$defs/safeKey" },
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "tool_version": { "type": "string" },
+    "mode": { "type": "string", "enum": ["strict_local", "hybrid_privacy", "cloud_assisted"] },
+    "started_utc": { "type": "string", "format": "date-time" },
+    "finished_utc": { "type": "string", "format": "date-time" },
+    "notice": {
+      "type": "string",
+      "const": "Research Preflight produces findings for human review. It does not detect or determine research misconduct. The absence of findings does not verify integrity."
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "network_allowed", "egress_events", "models_allowed", "write_roots"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["strict_local", "hybrid_privacy", "cloud_assisted"] },
+        "network_allowed": { "type": "boolean" },
+        "egress_events": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["destination", "purpose", "payload_digest", "timestamp_utc", "consent_record"],
+            "properties": {
+              "destination": { "type": "string" },
+              "purpose": { "type": "string" },
+              "payload_digest": { "type": "string" },
+              "timestamp_utc": { "type": "string", "format": "date-time" },
+              "consent_record": { "type": "string" }
+            }
+          }
+        },
+        "models_allowed": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["backend", "id", "endpoint_class"],
+            "properties": {
+              "backend": { "type": "string" },
+              "id": { "type": "string" },
+              "digest": { "type": ["string", "null"] },
+              "endpoint_class": { "type": "string", "enum": ["loopback", "local_process", "remote"] }
+            }
+          }
+        },
+        "write_roots": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      },
+      "allOf": [
+        {
+          "description": "Strict Local: no network, no egress events, no remote model endpoints.",
+          "if": { "properties": { "mode": { "const": "strict_local" } }, "required": ["mode"] },
+          "then": {
+            "properties": {
+              "network_allowed": { "const": false },
+              "egress_events": { "maxItems": 0 },
+              "models_allowed": {
+                "items": { "properties": { "endpoint_class": { "enum": ["loopback", "local_process"] } } }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "inputs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["subject"],
+      "properties": {
+        "subject": {
+          "type": "object", "additionalProperties": false,
+          "required": ["doc_id", "sha256", "page_count"],
+          "properties": {
+            "doc_id": { "const": "subject" },
+            "sha256": { "type": "string" },
+            "basename": { "type": ["string", "null"] },
+            "path": { "type": ["string", "null"], "description": "Omitted or null when the user requests path suppression." },
+            "page_count": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "corpus": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["index_version", "document_count", "panel_count", "stale_rows"],
+              "properties": {
+                "index_version": { "type": "string" },
+                "document_count": { "type": "integer", "minimum": 0 },
+                "panel_count": { "type": "integer", "minimum": 0 },
+                "stale_rows": { "type": "integer", "minimum": 0 },
+                "embedding_model": { "type": ["string", "null"] },
+                "embedding_digest": { "type": ["string", "null"] }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "component_versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Version of every stage and detector that ran, keyed by component name."
+    },
+    "seeds": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "coverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pages_parsed", "pages_total", "figures_detected", "panels_segmented",
+                   "panels_excluded", "detector_status"],
+      "properties": {
+        "pages_parsed": { "type": "integer", "minimum": 0 },
+        "pages_total": { "type": "integer", "minimum": 0 },
+        "pages_without_text_layer": { "type": "integer", "minimum": 0 },
+        "figures_detected": { "type": "integer", "minimum": 0 },
+        "figures_referenced_not_extracted": { "type": "array", "items": { "type": "string" } },
+        "figures_by_extraction_method": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "panels_segmented": { "type": "integer", "minimum": 0 },
+        "panels_excluded": { "type": "integer", "minimum": 0 },
+        "panel_exclusion_reasons": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "tables_detected": { "type": "integer", "minimum": 0 },
+        "tables_grid_unrecoverable": { "type": "integer", "minimum": 0 },
+        "detector_status": {
+          "type": "object",
+          "description": "Per detector family, one of three DISTINCT states. 'ran_found_nothing' and 'ran_not_applicable' must never be conflated.",
+          "additionalProperties": {
+            "type": "object", "additionalProperties": false,
+            "required": ["state"],
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": ["ran_found_findings", "ran_found_nothing", "ran_not_applicable", "did_not_run"]
+              },
+              "reason": { "type": ["string", "null"] },
+              "applicable_units": { "type": ["integer", "null"], "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["total", "by_review_priority", "by_finding_type"],
+      "description": "Rendering aid only. These are counts, not a rating: no field here ranks, grades, or scores the document or its authors.",
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "by_review_priority": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "info": { "type": "integer", "minimum": 0 },
+            "low": { "type": "integer", "minimum": 0 },
+            "medium": { "type": "integer", "minimum": 0 },
+            "high": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "by_finding_type": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "timings_ms": {
+      "type": "object",
+      "additionalProperties": { "type": "number", "minimum": 0 }
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "Relative path -> sha256, for every emitted artifact.",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "safeKey": {
+      "type": "string",
+      "not": {
+        "pattern": "(?i)(severity|integrity_score|fraud_score|risk_score|trust_score|overall_score|document_rating|confidence_of_misconduct|fraud|misconduct|fabrication|falsification|plagiarism|cheating|guilty|verdict)"
+      }
+    }
+  }
+}

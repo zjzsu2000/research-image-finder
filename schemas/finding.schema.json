@@ -1,0 +1,371 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://research-preflight.org/schemas/finding.schema.json",
+  "title": "Research Preflight Finding",
+  "description": "Canonical structured finding. Observation-named, evidence-bearing, human-triaged. This schema deliberately contains no aggregate score and no misconduct vocabulary; see FINDING_SCHEMA.md section 4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "id", "run_id", "finding_type", "review_priority",
+    "review_priority_note", "detector", "locations", "evidence", "why_flagged",
+    "possible_benign_explanations", "recommended_verification", "narrative_source",
+    "triage", "reproduction", "provenance"
+  ],
+  "propertyNames": { "$ref": "#/$defs/safeKey" },
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "id": { "type": "string", "pattern": "^f_[0-9a-f]{16}$" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "finding_type": {
+      "type": "string",
+      "enum": [
+        "image.duplicate_region_pair",
+        "image.corpus_region_match",
+        "image.panel_contains_panel",
+        "numeric.sample_size_disagreement",
+        "numeric.proportion_arithmetic_mismatch",
+        "numeric.value_disagreement_across_locations",
+        "stats.pvalue_inconsistent_with_statistic",
+        "stats.mean_inconsistent_with_granularity",
+        "reference.cited_not_listed",
+        "reference.listed_not_cited",
+        "reference.duplicate_entry",
+        "reference.malformed_entry",
+        "coverage.figure_referenced_not_extracted",
+        "coverage.panel_segmentation_fallback",
+        "coverage.table_grid_unrecoverable"
+      ]
+    },
+    "review_priority": { "type": "string", "enum": ["info", "low", "medium", "high"] },
+    "review_priority_note": {
+      "type": "string",
+      "const": "Ordering hint for human review. NOT a probability, likelihood, or indication of misconduct."
+    },
+    "detector": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "params_hash"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "params_hash": { "type": "string", "minLength": 4 }
+      }
+    },
+    "locations": {
+      "type": "array", "minItems": 1,
+      "items": { "$ref": "#/$defs/location" }
+    },
+    "evidence": {
+      "oneOf": [
+        { "$ref": "#/$defs/imageRegionMatch" },
+        { "$ref": "#/$defs/statRecomputation" },
+        { "$ref": "#/$defs/numericDisagreement" },
+        { "$ref": "#/$defs/referenceIntegrity" },
+        { "$ref": "#/$defs/coverageNote" }
+      ]
+    },
+    "evidence_assets": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "path", "sha256", "media_type"],
+        "properties": {
+          "role": { "type": "string", "enum": ["crop_a", "crop_b", "overlay", "context_a", "context_b", "page_render"] },
+          "path": { "type": "string", "pattern": "^evidence/" },
+          "sha256": { "type": "string", "minLength": 4 },
+          "media_type": { "type": "string", "enum": ["image/png", "image/webp"] }
+        }
+      }
+    },
+    "why_flagged": { "type": "string", "minLength": 1 },
+    "possible_benign_explanations": {
+      "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }
+    },
+    "recommended_verification": {
+      "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }
+    },
+    "narrative_source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "model"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["template", "llm"] },
+        "model": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["backend", "id"],
+              "properties": {
+                "backend": { "type": "string" },
+                "id": { "type": "string" },
+                "digest": { "type": ["string", "null"] }
+              }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "llm" } }, "required": ["mode"] },
+          "then": { "properties": { "model": { "type": "object" } } }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "template" } }, "required": ["mode"] },
+          "then": { "properties": { "model": { "type": "null" } } }
+        }
+      ]
+    },
+    "triage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "reason", "reviewer_note", "updated_at"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["open", "real_issue", "legitimate_reuse", "false_positive", "unsure"]
+        },
+        "reason": {
+          "type": ["string", "null"],
+          "enum": [
+            null, "same_control", "same_experiment", "inset_or_magnification",
+            "adjacent_or_serial_image", "disclosed_reuse", "preprint_to_publication",
+            "accidental_duplication", "wrong_file_inserted", "possible_manipulation",
+            "extraction_error", "segmentation_error", "detector_error",
+            "insufficient_evidence", "other"
+          ]
+        },
+        "reviewer_note": { "type": ["string", "null"] },
+        "updated_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "reproduction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["detector", "version", "params"],
+      "properties": {
+        "detector": { "type": "string" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "params": { "type": "object" },
+        "input_digests": { "type": "object" }
+      }
+    },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "related_finding_ids": {
+      "type": "array", "items": { "type": "string", "pattern": "^f_[0-9a-f]{16}$" }
+    }
+  },
+  "$defs": {
+    "safeKey": {
+      "description": "Forbids severity, aggregate-score, and misconduct vocabulary as object keys anywhere in a finding.",
+      "type": "string",
+      "not": {
+        "pattern": "(?i)(severity|integrity_score|fraud_score|risk_score|trust_score|overall_score|document_rating|confidence_of_misconduct|fraud|misconduct|fabrication|falsification|plagiarism|cheating|guilty|verdict)"
+      }
+    },
+    "location": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "doc_id", "doc_role"],
+      "properties": {
+        "role": { "type": "string", "enum": ["a", "b", "primary", "context"] },
+        "doc_id": { "type": "string", "minLength": 1 },
+        "doc_role": { "type": "string", "enum": ["subject", "corpus"] },
+        "page": { "type": ["integer", "null"], "minimum": 1 },
+        "figure_label": { "type": ["string", "null"] },
+        "panel_id": { "type": ["string", "null"] },
+        "bbox": { "$ref": "#/$defs/bbox" },
+        "region_bbox": { "$ref": "#/$defs/bbox" },
+        "char_span": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "array", "items": { "type": "integer", "minimum": 0 }, "minItems": 2, "maxItems": 2 }
+          ]
+        },
+        "table_id": { "type": ["string", "null"] },
+        "cell": { "type": ["string", "null"] },
+        "quoted_text": { "type": ["string", "null"], "maxLength": 400 }
+      }
+    },
+    "bbox": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 }
+      ]
+    },
+    "imageRegionMatch": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "method", "inlier_count", "inlier_ratio",
+                   "overlap_area_frac_a", "overlap_area_frac_b", "estimated_transform",
+                   "panel_content_type", "inset_relationship", "recurring_control_candidate"],
+      "properties": {
+        "kind": { "const": "image_region_match" },
+        "method": { "type": "string", "enum": ["ORB+RANSAC", "SIFT+RANSAC", "NCC", "phase_correlation"] },
+        "inlier_count": { "type": "integer", "minimum": 0 },
+        "inlier_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "overlap_area_frac_a": { "type": "number", "minimum": 0, "maximum": 1 },
+        "overlap_area_frac_b": { "type": "number", "minimum": 0, "maximum": 1 },
+        "phash_hamming": { "type": ["integer", "null"], "minimum": 0 },
+        "ncc_peak": { "type": ["number", "null"] },
+        "estimated_transform": {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "flip_x", "flip_y", "rotation_deg", "scale"],
+          "properties": {
+            "type": { "type": "string", "enum": ["identity", "translation", "similarity", "affine", "homography", "unknown"] },
+            "flip_x": { "type": "boolean" },
+            "flip_y": { "type": "boolean" },
+            "rotation_deg": { "type": "number" },
+            "scale": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "homography": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "array", "minItems": 3, "maxItems": 3,
+              "items": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number" } } }
+          ]
+        },
+        "panel_content_type": {
+          "type": "object", "additionalProperties": false,
+          "required": ["a", "b"],
+          "properties": {
+            "a": { "$ref": "#/$defs/contentType" },
+            "b": { "$ref": "#/$defs/contentType" }
+          }
+        },
+        "inset_relationship": { "type": "boolean" },
+        "recurring_control_candidate": { "type": "boolean" },
+        "recurring_control_match_count": { "type": ["integer", "null"], "minimum": 0 },
+        "same_work_candidate": { "type": ["boolean", "null"] }
+      }
+    },
+    "contentType": {
+      "type": "string",
+      "enum": ["micrograph", "blot", "plot", "schematic", "photo", "flow_cytometry", "unknown"]
+    },
+    "statRecomputation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "test", "reported", "parsed", "recomputed", "discrepancy", "tolerance", "assumptions", "source_span"],
+      "properties": {
+        "kind": { "const": "stat_recomputation" },
+        "test": { "type": "string", "enum": ["t", "F", "chi2", "r", "z", "grim"] },
+        "reported": { "type": "string" },
+        "parsed": { "type": "object" },
+        "recomputed": { "type": "object" },
+        "discrepancy": { "type": ["number", "string"] },
+        "tolerance": { "type": ["number", "string"] },
+        "rounding_model": { "type": ["string", "null"] },
+        "assumptions": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "source_span": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 }
+      }
+    },
+    "numericDisagreement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "quantity", "referent", "observations", "relation", "referent_resolution"],
+      "properties": {
+        "kind": { "const": "numeric_disagreement" },
+        "quantity": { "type": "string" },
+        "referent": { "type": "string" },
+        "observations": {
+          "type": "array", "minItems": 2,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["value", "location_index", "quoted_text"],
+            "properties": {
+              "value": { "type": ["number", "string"] },
+              "unit": { "type": ["string", "null"] },
+              "location_index": { "type": "integer", "minimum": 0 },
+              "quoted_text": { "type": "string", "maxLength": 400 }
+            }
+          }
+        },
+        "relation": { "type": "string", "enum": ["equality_expected", "arithmetic"] },
+        "computed": { "type": ["number", "string", "null"] },
+        "referent_resolution": {
+          "type": "string",
+          "enum": ["exact_label_match", "same_sentence", "same_table_row"]
+        },
+        "ambiguity_notes": { "type": ["string", "null"] }
+      }
+    },
+    "referenceIntegrity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "check", "resolution_source"],
+      "properties": {
+        "kind": { "const": "reference_integrity" },
+        "check": {
+          "type": "string",
+          "enum": ["cited_not_listed", "listed_not_cited", "duplicate_entry", "malformed_entry"]
+        },
+        "citation_marker": { "type": ["string", "null"] },
+        "bibliography_index": { "type": ["integer", "null"], "minimum": 1 },
+        "raw_entry": { "type": ["string", "null"], "maxLength": 1000 },
+        "parsed_fields": { "type": ["object", "null"] },
+        "duplicate_of": { "type": ["integer", "null"], "minimum": 1 },
+        "parser_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "resolution_source": { "type": "string", "enum": ["offline_document_only"] }
+      }
+    },
+    "coverageNote": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "stage", "detail"],
+      "properties": {
+        "kind": { "const": "coverage_note" },
+        "stage": { "type": "string", "enum": ["ingest", "figures", "panels", "tables", "references"] },
+        "detail": { "type": "string" },
+        "affected": { "type": ["object", "null"] }
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["timestamp_utc", "tool_version", "schema_version", "mode",
+                   "external_services_used", "models_used", "source_documents"],
+      "properties": {
+        "timestamp_utc": { "type": "string", "format": "date-time" },
+        "tool_version": { "type": "string" },
+        "schema_version": { "type": "string" },
+        "mode": { "type": "string", "enum": ["strict_local", "hybrid_privacy", "cloud_assisted"] },
+        "external_services_used": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["service", "purpose", "payload_digest"],
+            "properties": {
+              "service": { "type": "string" },
+              "purpose": { "type": "string" },
+              "payload_digest": { "type": "string" }
+            }
+          }
+        },
+        "models_used": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["backend", "id"],
+            "properties": {
+              "backend": { "type": "string" },
+              "id": { "type": "string" },
+              "digest": { "type": ["string", "null"] },
+              "endpoint_class": { "type": ["string", "null"], "enum": [null, "loopback", "local_process", "remote"] }
+            }
+          }
+        },
+        "index_version": { "type": ["string", "null"] },
+        "source_documents": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["doc_id", "sha256"],
+            "properties": {
+              "doc_id": { "type": "string" },
+              "sha256": { "type": "string" },
+              "basename": { "type": ["string", "null"] }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "description": "Strict Local runs must record zero external services.",
+          "if": { "properties": { "mode": { "const": "strict_local" } }, "required": ["mode"] },
+          "then": { "properties": { "external_services_used": { "maxItems": 0 } } }
+        }
+      ]
+    }
+  }
+}
