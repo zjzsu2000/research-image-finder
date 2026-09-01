@@ -177,7 +177,7 @@ def check_example_findings(schema: dict) -> None:
 # --------------------------------------------------------------------------- 3
 def check_denylist(files: list[Path]) -> None:
     for f in files:
-        rel = str(f.relative_to(ROOT))
+        rel = f.relative_to(ROOT).as_posix()
         if rel in DENYLIST_EXEMPT_PATHS:
             continue
         doc = json.loads(f.read_text(encoding="utf-8"))
@@ -225,7 +225,7 @@ def main() -> int:
     if errors:
         print(f"FAIL — {len(errors)} problem(s), {checks} checks passed\n")
         for e in errors:
-            print(f"  ✗ {e}")
+            print(f"  x {e}")
         return 1
     print(f"OK — {checks} checks passed")
     return 0
