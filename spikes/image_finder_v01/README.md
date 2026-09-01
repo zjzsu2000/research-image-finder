@@ -48,6 +48,11 @@ The prepared environment needs Python 3 with Tkinter plus the packages in
 `requirements-windows.txt`. This slice is source-only and does not include an installer or `.exe`.
 Dependency installation is setup work and is not performed by the Strict Local retrieval runtime.
 
+The GitHub Actions workflow builds an unsigned `ResearchImageFinder.exe` with PyInstaller after
+unit, documentation, Windows-path, non-interactive GUI-module, and frozen-bundle smoke checks pass.
+The uploaded artifact is named `ResearchImageFinder-windows-x64`. CI validates the Windows build
+path only; actual interactive Windows user validation remains outstanding.
+
 Run the small generated microscopy-oriented slice with:
 
 ```bash

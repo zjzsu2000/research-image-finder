@@ -2,6 +2,7 @@
 """Minimal Windows-oriented Tkinter shell for the disposable Image Finder trial."""
 from __future__ import annotations
 
+import json
 import queue
 import sys
 import threading
@@ -15,7 +16,7 @@ from tkinter import filedialog, messagebox, ttk
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from run_trial import SUPPORTED_STATUS, search_trial, write_trial_report  # noqa: E402
+from run_trial import SUPPORTED_STATUS, search_trial, write_trial_report, zero_socket_guard  # noqa: E402
 from windows_trial_support import (  # noqa: E402
     OUTCOME_CODES,
     OUTCOME_LABELS,
@@ -329,7 +330,36 @@ class WindowsTrialApp:
         self.photos = []
 
 
-def main() -> int:
+def noninteractive_gui_smoke_test() -> dict[str, str]:
+    """Initialize bundled Tcl and GUI symbols without requiring a desktop or opening a window."""
+    with zero_socket_guard():
+        interpreter = tk.Tcl()
+        patchlevel = str(interpreter.eval("info patchlevel"))
+        if not patchlevel:
+            raise RuntimeError("Tkinter Tcl interpreter did not initialize")
+        if WindowsTrialApp.__name__ != "WindowsTrialApp":
+            raise RuntimeError("Windows GUI module did not initialize")
+    return {
+        "status": "ok",
+        "tcl_patchlevel": patchlevel,
+        "scope": "noninteractive_module_and_bundle_smoke_only",
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments == ["--ci-smoke-test"]:
+        try:
+            result = noninteractive_gui_smoke_test()
+        except Exception as exc:
+            if sys.stderr is not None:
+                print(f"non-interactive GUI smoke failed: {exc}", file=sys.stderr)
+            return 1
+        if sys.stdout is not None:
+            print(json.dumps(result, sort_keys=True))
+        return 0
+    if arguments:
+        raise SystemExit(f"unknown arguments: {' '.join(arguments)}")
     root = tk.Tk()
     WindowsTrialApp(root)
     root.mainloop()

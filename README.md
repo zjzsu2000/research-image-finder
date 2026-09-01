@@ -94,6 +94,7 @@ annotate, group, or demote candidates while preserving the evidence. See
 | [FINDING_SCHEMA.md](FINDING_SCHEMA.md) | Deferred broader Preflight finding contract; not the Image Finder V0.1 result contract |
 | [docs/adr/](docs/adr/) | Accepted historical and current architecture decisions |
 | [docs/reviews/](docs/reviews/) | Non-binding independent reviews and resolution records |
+| [TRIAL_WINDOWS.md](TRIAL_WINDOWS.md) | Minimal unsigned Windows artifact instructions and validation caveat |
 
 ## Validation
 

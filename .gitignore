@@ -42,6 +42,7 @@ venv/
 .ruff_cache/
 dist/
 build/
+artifacts/
 
 # Local configuration and secrets
 .env

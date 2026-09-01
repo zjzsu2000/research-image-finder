@@ -1,0 +1,88 @@
+name: Windows trial artifact
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-trial-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    name: Test and build Windows x64 trial
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12 x64
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          architecture: x64
+          cache: pip
+          cache-dependency-path: |
+            spikes/image_finder_v01/requirements-windows.txt
+            spikes/image_finder_v01/requirements-packaging-windows.txt
+
+      - name: Install trial and packaging dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install `
+            -r spikes/image_finder_v01/requirements-windows.txt `
+            -r spikes/image_finder_v01/requirements-packaging-windows.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s spikes/image_finder_v01/tests -v
+
+      - name: Validate design documentation
+        run: python tools/validate_docs.py
+
+      - name: Run non-interactive Windows GUI and path smoke test
+        run: python spikes/image_finder_v01/windows_ci_smoke.py
+
+      - name: Build unsigned portable executable
+        shell: pwsh
+        run: |
+          python -m PyInstaller `
+            --noconfirm `
+            --clean `
+            --onefile `
+            --windowed `
+            --noupx `
+            --name ResearchImageFinder `
+            --paths spikes/image_finder_v01 `
+            spikes/image_finder_v01/run_windows_gui.py
+
+      - name: Smoke-test frozen executable without opening a window
+        shell: pwsh
+        run: |
+          & .\dist\ResearchImageFinder.exe --ci-smoke-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Stage portable trial artifact
+        shell: pwsh
+        run: |
+          $stage = "artifacts/ResearchImageFinder-windows-x64"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item dist/ResearchImageFinder.exe "$stage/ResearchImageFinder.exe"
+          Copy-Item TRIAL_WINDOWS.md "$stage/TRIAL_WINDOWS.md"
+          Copy-Item LICENSE "$stage/LICENSE"
+          $hash = (Get-FileHash "$stage/ResearchImageFinder.exe" -Algorithm SHA256).Hash.ToLower()
+          "$hash  ResearchImageFinder.exe" | Set-Content "$stage/SHA256SUMS.txt" -Encoding ascii
+
+      - name: Upload portable Windows trial artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ResearchImageFinder-windows-x64
+          path: artifacts/ResearchImageFinder-windows-x64/
+          if-no-files-found: error
+          retention-days: 14
